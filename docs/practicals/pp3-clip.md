@@ -383,6 +383,6 @@ You can try classification with linear probing. Try to fit Cifar100 with a Logis
 
 Do not use the full training dataset (it will take too long). Fit your dataset on 10000 train images (and adjust if needed).
 
-## Please take the time to give a feedback!
+## Please take the time to give feedback!
 
-Please fill the [feedback form](https://docs.google.com/forms/d/e/1FAIpQLSd4qRiPho43N8hZEpKEBhLpUe0W-wOoYNQRZj24-elrwj3esA/viewform?usp=publish-editor) to leave feedback so the future PPs can be improved.
+Please fill out the [feedback form](https://docs.google.com/forms/d/e/1FAIpQLSd4qRiPho43N8hZEpKEBhLpUe0W-wOoYNQRZj24-elrwj3esA/viewform?usp=publish-editor) to help us improve future practical sessions!
