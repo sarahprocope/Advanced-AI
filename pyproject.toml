@@ -18,7 +18,6 @@ docs = [
 turpan = [
     "datasets",
     "ftfy",
-    "numpy",
     "pillow",
     "tiktoken",
     "tqdm",
