@@ -92,13 +92,13 @@ Then you have to launch the `apptainer` image and create your env on top of it.
 First, create an env directory in `/tmpdir`:
 
 ```bash
-mkdir -p /tmpdir/YOUR_USERNAME/aai_env
+mkdir -p /tmpdir/YOUR_USERNAME/envs/aai
 ```
 
 Then, go to your project directory with `cd` and launch the apptainer image on the **login** node (do not forget to replace YOUR_USERNAME):
 
 ```bash
-apptainer shell --env PATH=$HOME/.local/bin:$PATH --env UV_PROJECT_ENVIRONMENT=/tmpdir/YOUR_USERNAME/aai_env --bind /tmpdir,/work --nv /work/conteneurs/sessions-interactives/pytorch-24.02-py3-calmip-si.sif
+apptainer shell --env PATH=$HOME/.local/bin:$PATH --env UV_PROJECT_ENVIRONMENT=/tmpdir/YOUR_USERNAME/envs/aai --bind /tmpdir,/work --nv /work/conteneurs/sessions-interactives/pytorch-24.02-py3-calmip-si.sif
 ```
 
 You are now in the `apptainer` image! Install the env using:
@@ -118,7 +118,7 @@ To run some code on the compute nodes, you have two choices. You can either use 
 Launch an interactive session on a compute node with (do not forget to replace YOUR_USERNAME):
 
 ```bash
-srun -p shared -n1 --gres=gpu:1 --pty apptainer shell --env PATH=$HOME/.local/bin:$PATH  --env UV_PROJECT_ENVIRONMENT=/tmpdir/YOUR_USERNAME/aai_env --bind /tmpdir,/work --nv /work/conteneurs/sessions-interactives/pytorch-24.02-py3-calmip-si.sif
+srun -p shared -n1 --gres=gpu:1 --pty apptainer shell --env PATH=$HOME/.local/bin:$PATH  --env UV_PROJECT_ENVIRONMENT=/tmpdir/YOUR_USERNAME/envs/aai --bind /tmpdir,/work --nv /work/conteneurs/sessions-interactives/pytorch-24.02-py3-calmip-si.sif
 ```
 
 You can check that you are on a compute node by using `nvidia-smi`. Then you can run your scripts as you would do in a local machine.
@@ -145,7 +145,7 @@ For long scirpts, often running overnight, you do not want to keep your terminal
 
 apptainer exec \
 --env PATH=$HOME/.local/bin:$PATH \
---env UV_PROJECT_ENVIRONMENT=/tmpdir/YOUR_USERNAME/aai_env \
+--env UV_PROJECT_ENVIRONMENT=/tmpdir/YOUR_USERNAME/envs/aai \
 --bind /tmpdir,/work \
 --nv /work/conteneurs/sessions-interactives/pytorch-24.02-py3-calmip-si.sif \
 uv run python mon_script.py
