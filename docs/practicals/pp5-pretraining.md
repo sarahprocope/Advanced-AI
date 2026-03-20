@@ -355,7 +355,7 @@ The training configuration is in `config/train_french_philosophy.py`. It defines
 5. Monitor progress with `squeue -u $USER -l` and check the output/error files in `~/job_results/`.
 
 
-At the end of the training, you can sample from the model using:
+At the end of the training, you can sample from the model (from the apptainer) using:
 
 ```bash
 uv run python sample.py --out_dir=out-french-philosophy --start="Your prompt here"
@@ -377,7 +377,7 @@ Instead of training from scratch, you can start from the pretrained GPT-2 (124M 
 4. Submit your job and monitor its progress as before.
 5. Compare the final validation loss with the pretrained-from-scratch model. Which one is better?
 
-At the end of the training, you can sample from the finetuned model using:
+At the end of the training, you can sample from the finetuned model (from the apptainer)using:
 
 ```bash
 uv run python sample.py --out_dir=out-french-philosophy-ft --start="Your prompt here"
