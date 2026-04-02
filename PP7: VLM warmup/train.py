@@ -37,10 +37,10 @@ def parse_args():
         help="Hugging Face datasets cache directory containing the pre-downloaded dataset.",
     )
     parser.add_argument("--train-samples", type=int, default=2560)
-    parser.add_argument("--val-samples", type=int, default=16)
+    parser.add_argument("--val-samples", type=int, default=256)
     parser.add_argument("--batch-size", type=int, default=5)
-    parser.add_argument("--max-steps", type=int, default=10)
-    parser.add_argument("--eval-interval", type=int, default=5)
+    parser.add_argument("--max-steps", type=int, default=50)
+    parser.add_argument("--eval-interval", type=int, default=10)
     parser.add_argument("--gradient-accumulation-steps", type=int, default=3)
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--max-length", type=int, default=1024)
