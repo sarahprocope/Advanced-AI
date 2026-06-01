@@ -62,7 +62,7 @@ to launch the apptainer image on a login node.
 You are now in the `apptainer` image! Install the env using:
 
 ```bash
-uv venv --system-site-packages /tmpdir/YOUR_USERNAME/envs/aai
+uv venv --python="/usr/bin/python" --system-site-packages /tmpdir/YOUR_USERNAME/envs/aai
 uv sync --only-group turpan
 ``` 
 Now the environment should be up and running.
