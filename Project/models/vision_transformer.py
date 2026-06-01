@@ -52,14 +52,14 @@ class ViTPatchEmbeddings(nn.Module):
         self.patch_size = cfg.patch_size  # 16
         self.hidden_dim = cfg.hidden_dim  # 768
 
-        # self.num_patches = ...          # total patches = (img_size // patch_size)²
-        # self.conv = ...                 # Conv2d patch extractor: kernel_size and stride
+        self.num_patches = (self.img_size // self.patch_size)**2          # total patches = (img_size // patch_size)²
+        self.conv = nn.Conv2d(3, self.hidden_dim, kernel_size = self.patch_size, stride = self.patch_size)                 # Conv2d patch extractor: kernel_size and stride
         #                                 # both equal to patch_size, in_channels=3,
         #                                 # out_channels=hidden_dim, padding="valid"
-        # self.position_embedding = ...   # learnable nn.Parameter of shape
+        self.position_embedding = nn.Parameter(torch.randn(1, self.num_patches, self.hidden_dim))   # learnable nn.Parameter of shape
         #                                 # [1, num_patches, hidden_dim]
 
-        raise NotImplementedError
+        #raise NotImplementedError
 
     def forward(self, x):
         """
@@ -70,17 +70,22 @@ class ViTPatchEmbeddings(nn.Module):
         """
         # TODO 1: Apply the convolutional patch extractor.
         #         Output: [B, hidden_dim, 32, 32]
+        x = self.conv(x)
 
         # TODO 2: Flatten the two spatial dimensions into one.
         #         Output: [B, hidden_dim, 1024]
+        x = torch.flatten(x, start_dim=2)
 
         # TODO 3: Swap the patch and channel dimensions.
         #         Output: [B, 1024, hidden_dim]
+        x = x.transpose(1,2)
 
         # TODO 4: Add the learned position embeddings to each patch token.
         #         Output: [B, 1024, hidden_dim]
+        x = x + self.position_embedding
+        return x
 
-        raise NotImplementedError
+        #raise NotImplementedError
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -101,15 +106,15 @@ class ViTAttention(nn.Module):
         assert self.hidden_dim % self.n_heads == 0
         self.dropout = cfg.dropout
 
-        # self.head_dim = ...          # embedding dimension per attention head
-        # self.qkv_proj = ...          # single Linear: hidden_dim → 3 × hidden_dim
+        self.head_dim = self.hidden_dim // self.n_heads          # embedding dimension per attention head
+        self.qkv_proj = nn.Linear(self.hidden_dim, 3* self.hidden_dim)          # single Linear: hidden_dim → 3 × hidden_dim
         #                              # (Q, K, V packed together; bias=True)
-        # self.out_proj = ...          # Linear: hidden_dim → hidden_dim (bias=True)
-        # self.attn_dropout = ...      # Dropout on attention weights
-        # self.resid_dropout = ...     # Dropout on the output projection
-        # self.sdpa = ...              # True if F.scaled_dot_product_attention is available
+        self.out_proj = nn.Linear(self.hidden_dim, self.hidden_dim, bias = True)          # Linear: hidden_dim → hidden_dim (bias=True)
+        self.attn_dropout = nn.Dropout(self.dropout)      # Dropout on attention weights
+        self.resid_dropout =  nn.Dropout(self.dropout)    # Dropout on the output projection
+        self.sdpa =  hasattr(F, 'scaled_dot_product_attention')             # True if F.scaled_dot_product_attention is available
 
-        raise NotImplementedError
+        #raise NotImplementedError
 
     def forward(self, x):
         """
@@ -124,10 +129,16 @@ class ViTAttention(nn.Module):
         #         qkv_proj, then split into three equal chunks along the
         #         last dimension.
         #         q, k, v each → [B, T, C]
+        qkv = self.qkv_proj(x)
+        q, k, v = torch.chunk(qkv, 3, dim=-1)
 
         # TODO 2: Use view to introduce the head dimension, then transpose
         #         so heads come before the sequence.
         #         Each of q, k, v → [B, n_heads, T, head_dim]
+        q = q.view(B, T, self.n_heads, self.head_dim)
+        k = k.view(B, T, self.n_heads, self.head_dim)
+        v = v.view(B, T, self.n_heads, self.head_dim)
+
 
         # TODO 3: Attend.
         #   If self.sdpa:
@@ -136,14 +147,34 @@ class ViTAttention(nn.Module):
         #       both directions.
         #   Else (fallback):
         #       scores = q @ k.T / sqrt(head_dim), softmax, dropout, @ v
+        if self.sdpa:
+            out = F.scaled_dot_product_attention(
+                q, k, v,
+                attn_mask = None,
+                dropout_p=self.dropout if self.training else 0.0, 
+                is_causal=False
+            )
+        else:
+            scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
+            attn_weights = F.softmax(scores, dim=-1)
+            attn_weights = self.attn_dropout(attn_weights)
+            out = torch.matmul(attn_weights, v)
+            
 
         # TODO 4: Transpose the head and sequence dimensions back, call
         #         contiguous, then collapse the head dimension into the
         #         channel dimension with view.
         #         Apply out_proj then resid_dropout.
         #         Output: [B, T, C]
+        out = out.transpose(1,2).contiguous()
+        out = out.view(B, T, C)
 
-        raise NotImplementedError
+        out = self.out_proj(out)
+        out = self.resid_dropout(out)
+        
+        return out
+
+    #raise NotImplementedError
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -156,12 +187,16 @@ class ViTMLP(nn.Module):
     def __init__(self, cfg):
         super().__init__()
 
-        # self.activation_fn = ...    # GELU activation (approximate='tanh')
-        # self.fc1 = ...              # Linear: hidden_dim → inter_dim
-        # self.fc2 = ...              # Linear: inter_dim → hidden_dim
-        # self.dropout = ...          # Dropout
+        self.hidden_dim = cfg.hidden_dim  # 768
+        self.inter_dim = cfg.inter_dim    # 3072
+        self.dropout = cfg.dropout
 
-        raise NotImplementedError
+        self.activation_fn = nn.GELU(approximate = 'tanh')    # GELU activation (approximate='tanh')
+        self.fc1 = nn.Linear(self.hidden_dim, self.inter_dim)              # Linear: hidden_dim → inter_dim
+        self.fc2 = nn.Linear(self.inter_dim, self.hidden_dim)              # Linear: inter_dim → hidden_dim
+        self.dropout = nn.Dropout(self.dropout)          # Dropout
+
+        #raise NotImplementedError
 
     def forward(self, x):
         """
@@ -170,7 +205,13 @@ class ViTMLP(nn.Module):
         TODO: Pass through fc1, apply the GELU activation, then fc2,
               then dropout.
         """
-        raise NotImplementedError
+        x = self.fc1(x)
+        x = self.activation_fn(x)
+        x = self.fc2(x)
+        x = self.dropout(x)
+
+        return x
+        #raise NotImplementedError
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -179,12 +220,14 @@ class ViTBlock(nn.Module):
     def __init__(self, cfg):
         super().__init__()
 
-        # self.ln1 = ...    # LayerNorm applied before attention
-        # self.attn = ...   # the ViTAttention sub-layer
-        # self.ln2 = ...    # LayerNorm applied before the MLP
-        # self.mlp = ...    # the ViTMLP sub-layer
+        self.hidden_dim = cfg.hidden_dim
 
-        raise NotImplementedError
+        self.ln1 = nn.LayerNorm(self.hidden_dim)    # LayerNorm applied before attention
+        self.attn = ViTAttention(cfg)   # the ViTAttention sub-layer
+        self.ln2 = nn.LayerNorm(self.hidden_dim)    # LayerNorm applied before the MLP
+        self.mlp = ViTMLP(cfg)    # the ViTMLP sub-layer
+
+        #raise NotImplementedError
 
     def forward(self, x):
         """
@@ -196,7 +239,11 @@ class ViTBlock(nn.Module):
         """
         # TODO: Apply attention with pre-norm and residual, then the MLP
         #       with pre-norm and residual (pattern shown in the docstring).
-        raise NotImplementedError
+        x = x + self.attn(x)
+        x = x + self.mlp(self.ln2(x))
+
+        return x 
+        #raise NotImplementedError
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -207,12 +254,12 @@ class ViT(nn.Module):
         self.cfg = cfg
         self.cls_flag = cfg.cls_flag
 
-        # self.patch_embedding = ...  # the ViTPatchEmbeddings sub-module
-        # self.dropout = ...          # Dropout
-        # self.blocks = ...           # ModuleList of n_blocks ViTBlock layers
-        # self.layer_norm = ...       # final LayerNorm (hidden_dim, eps=cfg.ln_eps)
+        self.patch_embedding = ViTPatchEmbeddings(cfg)  # the ViTPatchEmbeddings sub-module
+        self.dropout = nn.Dropout(cfg.dropout)          # Dropout
+        self.blocks = nn.ModuleList([ViTBlock(cfg) for _ in range(cfg.n_blocks)])           # ModuleList of n_blocks ViTBlock layers
+        self.layer_norm = nn.LayerNorm(cfg.hidden_dim, eps=cfg.ln_eps)       # final LayerNorm (hidden_dim, eps=cfg.ln_eps)
 
-        raise NotImplementedError
+        #raise NotImplementedError
 
         self.apply(self._init_weights)
 
@@ -242,7 +289,16 @@ class ViT(nn.Module):
         TODO 4: Apply the final layer normalization.
         TODO 5: Return all patch tokens (cls_flag is False for this encoder).
         """
-        raise NotImplementedError
+        x = self.patch_embedding(x)
+
+        x = self.dropout(x)
+
+        for block in self.blocks:
+            x = block(x)
+        x = self.layer_norm(x)
+        
+        return x
+        #raise NotImplementedError
 
     # ── Provided: loads pretrained SigLIP2 weights ────────────────────────────
     @classmethod
