@@ -41,12 +41,12 @@ class ModalityProjector(nn.Module):
         super().__init__()
         self.pixel_shuffle_factor = cfg.projector.pixel_shuffle_factor  # 4
 
-        # self.input_dim = ...    # vit.hidden_dim × pixel_shuffle_factor²
+        self.input_dim = 12288    # vit.hidden_dim × pixel_shuffle_factor²
         #                         # (embedding size after merging neighbouring patches)
-        # self.output_dim = ...
-        # self.proj = ...         # bias-free Linear: input_dim → output_dim
+        self.output_dim = 960
+        self.proj = nn.Linear(12288, 960, bias=False)       # bias-free Linear: input_dim → output_dim
 
-        raise NotImplementedError
+        #raise NotImplementedError
 
         self.apply(self._init_weights)
 
@@ -85,4 +85,7 @@ class ModalityProjector(nn.Module):
               project each token to the LM hidden dimension.
         """
         # TODO: Apply pixel shuffle, then the linear projection.
+        x = self.pixel_shuffle(x)  # [B, 1024, 768] → [B, 64, 12288]
+        x = self.proj(x)           # [B, 64, 12288] → [B, 64, 960]
+        return x
         raise NotImplementedError
