@@ -39,6 +39,7 @@ First, create an env directory in `/tmpdir`:
 
 ```bash
 mkdir -p /tmpdir/YOUR_USERNAME/envs
+mkdir -p /tmpdir/YOUR_USERNAME/uv-cache
 ```
 
 Save the following command as an alias in your `~/.bashrc` to avoid having to write it every time. Add these lines (DO NOT FORGET TO REPLACE `YOUR_USERNAME`):
@@ -47,6 +48,7 @@ Save the following command as an alias in your `~/.bashrc` to avoid having to wr
 alias run_apptainer_login="apptainer shell \
 --env PATH=$HOME/.local/bin:$PATH \
 --env UV_PROJECT_ENVIRONMENT=/tmpdir/YOUR_USERNAME/envs/aai \
+--env UV_CACHE_DIR=/tmpdir/YOUR_USERNAME/uv-cache \
 --env HF_HOME=/work/formation/YOUR_USERNAME/huggingface \
 --bind /tmpdir,/work \
 --nv /work/conteneurs/sessions-interactives/pytorch-24.02-py3-calmip-si.sif"
@@ -144,7 +146,7 @@ Let's call this file `run_job.sbatch`. You can submit this job to the cluster wi
 
 ```bash
 # CHANGE THE RESERVATION ACCORDING TO THE SCHEDULE
-sbatch --reservation=tpirt5 run_job.sbatch
+sbatch --reservation=TP_RESERVATION_NAME run_job.sbatch
 ```
 
 and check the status of your job with:
@@ -162,28 +164,28 @@ which displays informations about running jobs.
 
 
 !!! Note
-    The `--reservation=tpirt4` option is specific to this cluster and allows you to use the reserved resources for the Programming Practical sessions. The reference `tpirt4` will change for each PP following this schedule:
+    The `--reservation=TP_RESERVATION_NAME` option is specific to this cluster and allows you to use the reserved resources for the Programming Practical sessions. Replace `TP_RESERVATION_NAME` with the appropriate reservation name for each PP following this schedule:
 
 
-```
-tpirt1 2026-03-09 14:00:00 - 18:00:00 (Duree : 04 H)
-tpirt2 2026-03-13 14:00:00 - 18:00:00 (Duree : 04 H)
-tpirt4 2026-03-20 14:00:00 - 18:00:00 (Duree : 04 H)
-tpirt5 2026-04-03 14:00:00 - 18:00:00 (Duree : 04 H)
-tpirt6 2026-05-27 10:30:00 - 16:00:00 (Duree : 05 H)
-tpirt7 2026-05-29 14:00:00 - 18:00:00 (Duree : 04 H)
-tpirt8 2026-06-01 14:00:00 - 18:00:00 (Duree : 04 H)
-tpirt9 2026-06-03 14:00:00 - 18:00:00 (Duree : 04 H)
-tpirt10 2026-06-05 14:00:00 - 18:00:00 (Duree : 04 H)
-tpirt11 2026-06-08 14:00:00 - 18:00:00 (Duree : 04 H)
-tpirt12 2026-06-10 14:00:00 - 18:00:00 (Duree : 04 H)
-tpirt13 2026-06-12 14:00:00 - 18:00:00 (Duree : 04 H)
-tpirt14 2026-06-19 14:00:00 - 18:00:00 (Duree : 04 H)
-tpirt15 2026-06-22 08:00:00 - 10:00:00 (Duree : 02 H)
-tpirt16 2026-06-23 10:00:00 - 12:00:00 (Duree : 02 H)
-tpirt17 2026-06-24 14:00:00 - 16:00:00 (Duree : 02 H)
-tpirt18 2026-06-26 08:00:00 - 10:00:00 (Duree : 02 H)
-```
+| Date | Reservation name |
+|------|------------------|
+| 09-03-2026 | tpirt1 |
+| 13-03-2026 | tpirt2 |
+| 20-03-2026 | tpirt4 |
+| 03-04-2026 | tpirt5 |
+| 27-05-2026 | tpirt6 |
+| 29-05-2026 | tpirt7 |
+| 01-06-2026 | tpirt8 |
+| 03-06-2026 | tpirt9 |
+| 05-06-2026 | tpirt10 |
+| 08-06-2026 | tpirt11 |
+| 10-06-2026 | tpirt12 |
+| 12-06-2026 | tpirt13 |
+| 19-06-2026 | tpirt14 |
+| 22-06-2026 | tpirt15 |
+| 23-06-2026 | tpirt16 |
+| 24-06-2026 | tpirt17 |
+| 26-06-2026 | tpirt18 |
 
 The code will run silently on the cluster but it will output `stdin` and `stderr` in `--output` and `--error` paths specified in the `.sbatch` script. First, create the paths:
 
