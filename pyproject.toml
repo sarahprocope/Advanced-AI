@@ -1,7 +1,7 @@
 [project]
 name = "advanced-ai"
 version = "0.1.0"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 
 [dependency-groups]
 student = [
@@ -29,6 +29,7 @@ turpan = [
     "tiktoken>=0.5,<0.8",
     "tqdm>=4.65,<5",
     "transformers>=4.38,<5",
+    "pytest>=8.0",
 ]
 
 [tool.uv]

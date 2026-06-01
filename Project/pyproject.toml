@@ -1,12 +1,11 @@
 [project]
 name = "advanced-ai"
 version = "0.1.0"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 
 [dependency-groups]
 student = [
     "datasets>=4.5.0",
-    "pytest>=8.0",
     "ftfy>=6.3.1",
     "matplotlib>=3.10.8",
     "numpy>=2.4.2",
@@ -30,6 +29,7 @@ turpan = [
     "tiktoken>=0.5,<0.8",
     "tqdm>=4.65,<5",
     "transformers>=4.38,<5",
+    "pytest>=8.0",
 ]
 
 [tool.pytest.ini_options]
