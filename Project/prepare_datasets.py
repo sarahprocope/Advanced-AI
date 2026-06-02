@@ -1,12 +1,5 @@
 """Admin script: download datasets once and save them to a shared filesystem.
 
-Problem: HuggingFace's cache uses file locks that are tied to the user who
-created them.  On NFS/SLURM clusters this prevents other users from reading
-the same cached dataset.
-
-Solution: use dataset.save_to_disk() which writes plain Arrow files (no locks).
-Other users then call load_from_disk() which reads directly — no locking needed.
-
 Usage (run as an admin or any user with write access to SHARED_PATH):
     python prepare_datasets.py --shared_path /your/shared/path
 
