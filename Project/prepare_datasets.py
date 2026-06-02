@@ -15,7 +15,18 @@ import argparse
 import os
 
 
-CAULDRON_SUBSETS = ["ai2d", "vqa_v2", "llava"]   # safe subsets (no tiling needed)
+CAULDRON_SUBSETS = [
+    "ai2d", "aokvqa", "chart2text", "chartqa", "clevr", "clevr_math",
+    "cocoqa", "datikz", "diagram_image_to_text", "docvqa", "dvqa",
+    "figureqa", "finqa", "geomverse", "hateful_memes", "hitab", "iam",
+    "iconqa", "infographic_vqa", "intergps", "localized_narratives",
+    "mapqa", "mimic_cgd", "multihiertt", "nlvr2", "ocrvqa", "okvqa",
+    "plotqa", "raven", "rendered_text", "robut_sqa", "robut_wikisql",
+    "robut_wtq", "scienceqa", "screen2words", "spot_the_diff", "st_vqa",
+    "tabmwp", "tallyqa", "tat_qa", "textcaps", "textvqa", "tqa",
+    "vistext", "visual7w", "visualmrc", "vqarad", "vqav2", "vsr",
+    "websight",
+]
 FLICKR_REPO      = "AnyModal/flickr30k"
 CAULDRON_REPO    = "HuggingFaceM4/the_cauldron"
 
@@ -23,15 +34,22 @@ CAULDRON_REPO    = "HuggingFaceM4/the_cauldron"
 def save_cauldron(shared_path: str, subsets: list[str]):
     from datasets import load_dataset
 
+    failed = []
     for subset in subsets:
         out_dir = os.path.join(shared_path, "the_cauldron", subset)
         if os.path.exists(os.path.join(out_dir, "dataset_info.json")):
             print(f"  [skip] {subset} already exists at {out_dir}")
             continue
         print(f"  Downloading the_cauldron/{subset} …")
-        ds = load_dataset(CAULDRON_REPO, subset)
-        ds.save_to_disk(out_dir)
-        print(f"  Saved to {out_dir}")
+        try:
+            ds = load_dataset(CAULDRON_REPO, subset)
+            ds.save_to_disk(out_dir)
+            print(f"  Saved to {out_dir}")
+        except Exception as e:
+            print(f"  [FAILED] {subset}: {e}")
+            failed.append(subset)
+    if failed:
+        print(f"\n  Warning: {len(failed)} subset(s) failed: {failed}")
 
 
 def save_flickr(shared_path: str):
