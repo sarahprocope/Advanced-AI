@@ -172,27 +172,21 @@ Everything else — the optimiser, three per-component learning-rate groups, the
 
 ### Datasets
 
-Prepare datasets before training using `prepare_datasets.py`:
+Test that you can read the datasets successfully with:
 
 ```bash
-# Flickr30k — lightweight, good for a smoke test
-python prepare_datasets.py --dataset flickr --output_dir /path/to/flickr30k
-
-# The Cauldron — large multi-task dataset for serious training
-python prepare_datasets.py --dataset cauldron --output_dir /path/to/cauldron
+uv run python test_data_loading.py
 ```
 
 Then launch training:
 
 ```bash
 # Quick smoke test on Flickr
-python train.py --dataset_type flickr \
-    --dataset_local_path /path/to/flickr30k \
+uv run python train.py --dataset_type flickr \
     --max_steps 100 --batch_size 1
 
 # Full training on The Cauldron
-python train.py --dataset_type cauldron \
-    --dataset_local_path /path/to/cauldron \
+uv run python train.py --dataset_type cauldron \
     --max_steps 10000
 ```
 
