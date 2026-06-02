@@ -1,4 +1,6 @@
 from dataclasses import dataclass, field
+import os
+from typing import Tuple
 
 
 @dataclass
@@ -211,8 +213,22 @@ class TrainConfig:
     # 'flickr' → FlickrDataset (both are IterableDatasets)
     dataset_type: str = 'cauldron'
 
-    # Local path to the Arrow dataset saved by prepare_datasets.py via
-    # save_to_disk(); loaded with load_from_disk() to avoid HF lock issues
+    # Cauldron subset(s) to train on; only used when dataset_type == 'cauldron'.
+    # Defaults to all available subsets.
+    dataset_subsets: Tuple[str, ...] = (
+        "ai2d", "aokvqa", "chart2text", "chartqa",
+        "cocoqa", "datikz", "diagram_image_to_text", "docvqa", "dvqa",
+        "figureqa", "finqa", "geomverse", "hateful_memes", "hitab", "iam",
+        "iconqa", "infographic_vqa", "intergps", "localized_narratives",
+        "mapqa", "mimic_cgd", "multihiertt", "nlvr2", "ocrvqa",
+        "plotqa", "raven", "rendered_text", "robut_sqa", "robut_wikisql",
+        "robut_wtq", "scienceqa", "screen2words", "spot_the_diff", "st_vqa",
+        "tabmwp", "tallyqa", "tat_qa", "textcaps", "textvqa", "tqa",
+        "vistext", "visual7w", "visualmrc", "vqarad", "vqav2", "vsr",
+        "websight",
+    )
+
+    # Base path where prepare_datasets.py saved the Arrow datasets
     dataset_local_path: str = '/work/shared/TPIRT'
 
     # Number of validation samples evaluated at each eval_interval
@@ -228,3 +244,10 @@ class TrainConfig:
 
     # Whether to apply torch.compile() to the model for potential speedup
     compile: bool = False
+
+    def __post_init__(self):
+        # Auto-append dataset type/subset to base path if not already present
+        if self.dataset_type == 'flickr' and not self.dataset_local_path.endswith('flickr30k'):
+            self.dataset_local_path = os.path.join(self.dataset_local_path, 'flickr30k')
+        elif self.dataset_type == 'cauldron' and 'the_cauldron' not in self.dataset_local_path:
+            self.dataset_local_path = os.path.join(self.dataset_local_path, 'the_cauldron')
