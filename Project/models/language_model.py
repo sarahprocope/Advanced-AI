@@ -530,7 +530,8 @@ class LanguageModel(nn.Module):
         cfg.hidden_dim = hf.hidden_size
         cfg.inter_dim = hf.intermediate_size
         cfg.rms_eps = hf.rms_norm_eps
-        cfg.re_base = hf.rope_parameters.get('rope_theta', 100000)
+        #cfg.re_base = hf.rope_parameters.get('rope_theta', 100000)
+        cfg.re_base = getattr(hf, 'rope_theta', 100000)
         cfg.max_position_embeddings = hf.max_position_embeddings
         cfg.n_heads = hf.num_attention_heads
         cfg.n_kv_heads = hf.num_key_value_heads
