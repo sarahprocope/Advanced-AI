@@ -239,7 +239,12 @@ class TrainConfig:
     # dropped by VQACollator to prevent OOM
     max_length: int = 2048
 
-    # Directory where best checkpoints are saved during training
+    # Optional MMStar validation callback. Leave mmstar_val_path empty to disable.
+    mmstar_val_path: str = ''
+    mmstar_eval_interval: int = 0
+    mmstar_eval_limit: int = 128
+    mmstar_output_dir: str = 'eval_results'
+
     checkpoint_dir: str = 'checkpoints'
 
     # Whether to apply torch.compile() to the model for potential speedup
