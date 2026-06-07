@@ -240,7 +240,7 @@ class TrainConfig:
     max_length: int = 2048
 
     # Optional MMStar validation callback. Leave mmstar_val_path empty to disable.
-    mmstar_val_path: str = ''
+    mmstar_val_path: str = '/work/shared/TPIRT/mmstar'
     mmstar_eval_interval: int = 0
     mmstar_eval_limit: int = 128
     mmstar_output_dir: str = 'eval_results'
