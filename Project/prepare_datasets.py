@@ -6,6 +6,7 @@ Usage (run as an admin or any user with write access to SHARED_PATH):
 After this script finishes, set in TrainConfig or via CLI:
     --dataset_local_path /your/shared/path/the_cauldron/ai2d   (for Cauldron)
     --dataset_local_path /your/shared/path/flickr30k           (for Flickr)
+    --dataset_local_path /your/shared/path/mmstar              (for MMStar eval)
 
 Then make the directory world-readable:
     chmod -R a+rX /your/shared/path
@@ -29,6 +30,14 @@ CAULDRON_SUBSETS = [
 ]
 FLICKR_REPO      = "AnyModal/flickr30k"
 CAULDRON_REPO    = "HuggingFaceM4/the_cauldron"
+MMSTAR_REPO      = "Lin-Chen/MMStar"
+
+
+def dataset_exists(path: str) -> bool:
+    return (
+        os.path.exists(os.path.join(path, "dataset_info.json"))
+        or os.path.exists(os.path.join(path, "dataset_dict.json"))
+    )
 
 
 def save_cauldron(shared_path: str, subsets: list[str]):
@@ -37,7 +46,7 @@ def save_cauldron(shared_path: str, subsets: list[str]):
     failed = []
     for subset in subsets:
         out_dir = os.path.join(shared_path, "the_cauldron", subset)
-        if os.path.exists(os.path.join(out_dir, "dataset_info.json")):
+        if dataset_exists(out_dir):
             print(f"  [skip] {subset} already exists at {out_dir}")
             continue
         print(f"  Downloading the_cauldron/{subset} …")
@@ -56,11 +65,24 @@ def save_flickr(shared_path: str):
     from datasets import load_dataset
 
     out_dir = os.path.join(shared_path, "flickr30k")
-    if os.path.exists(os.path.join(out_dir, "dataset_info.json")):
+    if dataset_exists(out_dir):
         print(f"  [skip] flickr30k already exists at {out_dir}")
         return
     print("  Downloading flickr30k …")
     ds = load_dataset(FLICKR_REPO)
+    ds.save_to_disk(out_dir)
+    print(f"  Saved to {out_dir}")
+
+
+def save_mmstar(shared_path: str):
+    from datasets import load_dataset
+
+    out_dir = os.path.join(shared_path, "mmstar")
+    if dataset_exists(out_dir):
+        print(f"  [skip] MMStar already exists at {out_dir}")
+        return
+    print("  Downloading MMStar …")
+    ds = load_dataset(MMSTAR_REPO)
     ds.save_to_disk(out_dir)
     print(f"  Saved to {out_dir}")
 
@@ -71,6 +93,7 @@ def main():
                    help="Shared directory where datasets will be saved.")
     p.add_argument("--skip_cauldron", action="store_true")
     p.add_argument("--skip_flickr", action="store_true")
+    p.add_argument("--skip_mmstar", action="store_true")
     p.add_argument("--cauldron_subsets", type=str, default=",".join(CAULDRON_SUBSETS),
                    help="Comma-separated list of Cauldron subsets to download.")
     args = p.parse_args()
@@ -85,12 +108,18 @@ def main():
         print("=== Flickr30k ===")
         save_flickr(args.shared_path)
 
+    if not args.skip_mmstar:
+        print("=== MMStar ===")
+        save_mmstar(args.shared_path)
+
     print(f"\nDone. Make the directory readable by all users:")
     print(f"    chmod -R a+rX {args.shared_path}")
     print(f"\nThen train with:")
     print(f"    python train.py --dataset_local_path {args.shared_path}/the_cauldron/ai2d")
     print(f"  or")
     print(f"    python train.py --dataset_type flickr --dataset_local_path {args.shared_path}/flickr30k")
+    print(f"\nThen evaluate with:")
+    print(f"    python eval_mmstar.py --checkpoint checkpoints/best_step5000 --dataset_local_path {args.shared_path}/mmstar --split val")
 
 
 if __name__ == "__main__":

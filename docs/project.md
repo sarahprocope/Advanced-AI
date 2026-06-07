@@ -41,7 +41,7 @@ The image is tokenised into **64 visual tokens** that are injected into the LM's
 | 3. Forwards | `forward` of every component | [shape + correctness tests](#section-6-test-suite) |
 | 4. Glue | `VisionLanguageModel` | [end-to-end VLM tests](#section-6-test-suite) |
 | 5. Training | inner loop in `train.py` | smoke-test on Flickr |
-| 6. Evaluation | TBD | — |
+| 6. Evaluation | MMStar validation | `eval_mmstar.py` |
 
 ### Models and key numbers
 
@@ -202,7 +202,49 @@ uv run python train.py --dataset_type cauldron \
 
 ## Section 5 — Evaluation
 
-> **TBD** — evaluation metrics and scripts will be provided in a later update.
+The project uses [MMStar](https://huggingface.co/datasets/Lin-Chen/MMStar) as validation benchmark. MMStar is a multimodal multiple-choice
+benchmark: each example contains an image, a question with answer options, and
+the correct option letter.
+
+You will evaluate only on the public MMStar `val` split. 
+
+
+### Run MMStar validation
+
+After training has saved a checkpoint, run:
+
+```bash
+python eval_mmstar.py \
+    --checkpoint checkpoints/best_step5000 \
+    --dataset_local_path /path/to/shared/datasets/mmstar \
+    --split val \
+    --output_path eval_results/mmstar_best_step5000.json
+```
+
+The script reports:
+
+- overall MMStar validation accuracy,
+- the number of evaluated examples,
+- the number of invalid predictions where no `A`/`B`/`C`/`D` answer was found,
+- per-category accuracy when category metadata is available.
+
+### Optional validation during training
+
+You can also run MMStar validation automatically during training by passing the
+MMStar path and an evaluation interval:
+
+```bash
+python train.py --dataset_type cauldron \
+    --dataset_local_path /path/to/shared/datasets/the_cauldron/ai2d \
+    --max_steps 10000 \
+    --mmstar_val_path /path/to/shared/datasets/mmstar \
+    --mmstar_eval_interval 1000 \
+    --mmstar_eval_limit 128
+```
+
+When enabled, training saves MMStar metrics under `eval_results/` and keeps a
+separate best checkpoint named like `best_mmstar_step1000`.
+
 
 ---
 

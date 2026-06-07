@@ -19,6 +19,7 @@ The STUDENT SECTION (clearly marked below) is the inner training loop body.
 """
 
 import argparse
+import json
 import math
 import os
 import time
@@ -201,6 +202,7 @@ def train(train_cfg: TrainConfig, vlm_cfg: VLMConfig):
     # ── Training state ────────────────────────────────────────────────────────
     global_step = 0
     best_val_loss = float("inf")
+    best_mmstar_acc = -1.0
     batch_loss = 0.0   # set by the student section each micro-step
     optimizer.zero_grad()
 
@@ -313,6 +315,60 @@ def train(train_cfg: TrainConfig, vlm_cfg: VLMConfig):
                 )
                 model.save_pretrained(ckpt)
                 print(f"  → new best checkpoint saved to {ckpt}")
+
+            if (
+                train_cfg.mmstar_val_path
+                and train_cfg.mmstar_eval_interval > 0
+                and global_step % train_cfg.mmstar_eval_interval == 0
+            ):
+                from datasets import load_from_disk
+
+                from eval_mmstar import evaluate_mmstar
+
+                tokenizer = get_tokenizer(vlm_cfg.lm.tokenizer, vlm_cfg.image_token)
+                image_processor = get_image_processor(vlm_cfg.vit.img_size)
+                raw_mmstar = load_from_disk(train_cfg.mmstar_val_path)
+                mmstar_val = raw_mmstar["val"] if "val" in raw_mmstar else raw_mmstar
+                mmstar_metrics = evaluate_mmstar(
+                    model=model,
+                    dataset=mmstar_val,
+                    tokenizer=tokenizer,
+                    image_processor=image_processor,
+                    device=device,
+                    limit=train_cfg.mmstar_eval_limit,
+                    show_progress=False,
+                )
+                mmstar_acc = mmstar_metrics["accuracy"]
+                print(
+                    f"step {global_step:5d} | mmstar_val_acc "
+                    f"{mmstar_acc:.4f}"
+                )
+
+                os.makedirs(train_cfg.mmstar_output_dir, exist_ok=True)
+                mmstar_path = os.path.join(
+                    train_cfg.mmstar_output_dir,
+                    f"mmstar_step{global_step}.json",
+                )
+                with open(mmstar_path, "w") as f:
+                    json.dump(
+                        {
+                            "global_step": global_step,
+                            "checkpoint_dir": train_cfg.checkpoint_dir,
+                            "mmstar_val_path": train_cfg.mmstar_val_path,
+                            "metrics": mmstar_metrics,
+                        },
+                        f,
+                        indent=2,
+                    )
+
+                if mmstar_acc > best_mmstar_acc:
+                    best_mmstar_acc = mmstar_acc
+                    ckpt = os.path.join(
+                        train_cfg.checkpoint_dir,
+                        f"best_mmstar_step{global_step}",
+                    )
+                    model.save_pretrained(ckpt)
+                    print(f"  → new best MMStar checkpoint saved to {ckpt}")
 
             model.train()
 
