@@ -876,34 +876,34 @@ Make sure that you can run the application locally before starting this tutorial
 ## 1. Google cloud account and free coupon code
 Click on the link sent by email to redeem your free coupon code (you must use your INSA mail address to redeem it).
 Once you have your coupon code, go to [this link](https://console.cloud.google.com/education?pli=1) to get your credits (you will need a Google account, if needed, you can create one using your INSA mail address).
-![](img/coupon.png)
+![](../assets/gcp/coupon.png)
 
 ## 2. Create a new instance
 On the GCloud homepage, click on the side bar menu on the left and select "Compute Engine" -> "VM instances".
-![](img/vm_instances.png)  
+![](../assets/gcp/vm_instances.png)  
 Then click on the "Create project button", and create a project named _Advanced-AI_. No need to fill in the other fields.
-![](img/create_project.png)  
+![](../assets/gcp/create_project.png)  
 You should arrive at the following page, click on "Enable API"
-![](img/enable_api.png)  
+![](../assets/gcp/enable_api.png)  
 You should now see a page proposing to create a new instance. Click on "Create instance".
 Fill in the following fields in __Machine configuration__ section:
-![](img/vm_config.png)  
+![](../assets/gcp/vm_config.png)  
 Then in the __OS and Storage__ section,  
-![](img/os_storage.png)  
+![](../assets/gcp/os_storage.png)  
  click on the "Change" button and select "Deep Learning in Linux" and select the first option.
-![](img/disk_image.png)  
+![](../assets/gcp/disk_image.png)  
 Then in the __Networking__ section, set the following fields:
-![](img/networking_1.png)  
+![](../assets/gcp/networking_1.png)  
 In this same section under __Network interfaces__, click the ▾ arrow next to
 __default default IPv4 (10.128.0.0/20)__.
 
 Find __External IPv4 address dropdown__  and select  __Reserve static address__.
 Give it a name like docker-vlm-static-ip and click on __Reserve__.  
-![](img/networking_2.png)  
+![](../assets/gcp/networking_2.png)  
 
 We will also use spot instances to save money. Spot instances are instances that are available at a lower price than on-demand instances, but are not guaranteed to be available. They are a good way to save money, but you should be aware that they can be interrupted at any time.  
 On the __Advanced__ section, set the following fields to use spot instances and automatically stop the instance when it is not in use:
-![](img/spot.png)  
+![](../assets/gcp/spot.png)  
 Then click on the "Create" button to create the instance.
 
 ## 3. Install the GCloud SDK on your local machine
@@ -917,7 +917,7 @@ This will guide you through the process of setting up your GCloud SDK. You will 
 
 ## 4. Connect to your instance
 Once your instance is created, you can find its name in the VM instances list on the Google Cloud Platform console.
-![](img/instance_created.png)  
+![](../assets/gcp/instance_created.png)  
 You can connect to it using the following command:
 ```console
 gcloud compute ssh --zone "us-central1-f" "advanced-ai-project"
@@ -1006,7 +1006,7 @@ sudo docker-compose up -d
 The `-d` flag runs the containers in detached mode (in the background).
 
 Now go to the Google Cloud Platform console to get the external IP address of your instance.
-![](img/external_ip.png)
+![](../assets/gcp/external_ip.png)
 
 You should now be able to access:   
 - The Gradio interface at `http://your_instance_ip:7860`  
