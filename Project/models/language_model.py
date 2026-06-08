@@ -290,7 +290,7 @@ class LMAttention(nn.Module):
         
         output = F.scaled_dot_product_attention(
             q, k_exp, v_exp,
-            attn_mask=mask,
+            attn_mask=None if is_causal else mask,
             dropout_p=dropout_p,
             is_causal=is_causal
         )
