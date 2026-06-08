@@ -85,7 +85,17 @@ class VisionLanguageModel(nn.Module):
         # self.MP = ...               # the ModalityProjector
         # self.tokenizer = ...        # the tokenizer (use get_tokenizer)
 
-        raise NotImplementedError
+        #raise NotImplementedError
+        if load_backbone:
+            self.vision_encoder = ViT.from_pretrained(cfg.vit)
+            self.decoder = LanguageModel.from_pretrained(cfg.lm)
+        else:
+            self.vision_encoder = ViT(cfg.vit)
+            self.decoder = LanguageModel(cfg.lm)
+        self.MP = ModalityProjector(cfg)
+        #self.tokenizer = get_tokenizer(cfg.tokenizer)
+        self.__dict__['tokenizer'] = get_tokenizer(cfg.lm.tokenizer, cfg.image_token)
+            
 
     # ── PROVIDED — image token replacement ───────────────────────────────────
     def _replace_img_tokens_with_embd(self, input_ids, token_embd, image_embd):
@@ -132,6 +142,7 @@ class VisionLanguageModel(nn.Module):
         ──────────────────
         TODO 1 — Embed the input token ids into the LM's embedding space.
                  Output: [B, T, 960]
+        
 
         TODO 2 — Pre-process the images and run them through the vision
                  encoder.
@@ -154,7 +165,32 @@ class VisionLanguageModel(nn.Module):
 
         TODO 7 — If no targets: return (hidden, None) for generation.
         """
-        raise NotImplementedError
+        #raise NotImplementedError
+        token_embd = self.decoder.token_embedding(input_ids) # [B, T, 960]
+
+        images = self._process_images(pixel_values, input_ids.device)
+        image_feats = self.vision_encoder(images)  # [B, 1024, 768]
+
+        image_embd = self.MP(image_feats)  # [B, 64, 960]
+
+        token_embd = self._replace_img_tokens_with_embd(
+            input_ids, token_embd, image_embd
+        )
+
+        hidden, _ = self.decoder(
+            token_embd, attention_mask=attention_mask
+        )  # [B, T, 960]
+
+        if targets is not None:
+            logits = self.decoder.head(hidden)  # [B, T, vocab_size]
+            loss = F.cross_entropy(
+                logits.view(-1, logits.size(-1)),
+                targets.view(-1),
+                ignore_index=-100
+            )
+            return logits, loss
+
+        return hidden, None
 
     # ── PROVIDED — autoregressive generation ─────────────────────────────────
     @torch.inference_mode()
