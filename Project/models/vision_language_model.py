@@ -122,7 +122,7 @@ class VisionLanguageModel(nn.Module):
             coords = torch.nonzero(mask)
             
             if coords.size(0) > num_visual_tokens:
-                clean_mask = torch.zeros_as(mask)
+                clean_mask = torch.zeros_like(mask)
                 # On ne réactive en True que le nombre exact de tokens requis
                 keep_coords = coords[:num_visual_tokens]
                 clean_mask[keep_coords[:, 0], keep_coords[:, 1]] = True
