@@ -114,7 +114,21 @@ class VisionLanguageModel(nn.Module):
         """
         updated = token_embd.clone()
         mask = (input_ids == self.tokenizer.image_token_id)
-        updated[mask] = image_embd.view(-1, image_embd.size(-1)).to(updated.dtype)
+
+        flat_image_embd = image_embd.view(-1, image_embd.size(-1)).to(updated.dtype)
+        num_visual_tokens = flat_image_embd.size(0)
+        
+        if mask.sum() != num_visual_tokens:
+            coords = torch.nonzero(mask)
+            
+            if coords.size(0) > num_visual_tokens:
+                clean_mask = torch.zeros_as(mask)
+                # On ne réactive en True que le nombre exact de tokens requis
+                keep_coords = coords[:num_visual_tokens]
+                clean_mask[keep_coords[:, 0], keep_coords[:, 1]] = True
+                mask = clean_mask
+
+        updated[mask] = flat_image_embd
         return updated
 
     # ── PROVIDED — image pre-processing ──────────────────────────────────────
