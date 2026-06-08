@@ -284,13 +284,14 @@ class LMAttention(nn.Module):
             mask = None
 
         # TODO 6: scaled_dot_product_attention
+        
         T_kv = k_exp.shape[2]
         is_causal = (T_curr == T_kv) and (T_curr > 1)
         dropout_p = self.dropout if self.training else 0.0
-        
+
         output = F.scaled_dot_product_attention(
             q, k_exp, v_exp,
-            attn_mask=mask,
+            attn_mask=None if is_causal else mask,
             dropout_p=dropout_p,
             is_causal=is_causal
         )
