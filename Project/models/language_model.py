@@ -284,13 +284,14 @@ class LMAttention(nn.Module):
             mask = None
 
         # TODO 6: scaled_dot_product_attention
+        
         T_kv = k_exp.shape[2]
         is_causal = (T_curr == T_kv) and (T_curr > 1)
         dropout_p = self.dropout if self.training else 0.0
-        
+
         output = F.scaled_dot_product_attention(
             q, k_exp, v_exp,
-            attn_mask=mask,
+            attn_mask=None if is_causal else mask,
             dropout_p=dropout_p,
             is_causal=is_causal
         )
@@ -530,7 +531,8 @@ class LanguageModel(nn.Module):
         cfg.hidden_dim = hf.hidden_size
         cfg.inter_dim = hf.intermediate_size
         cfg.rms_eps = hf.rms_norm_eps
-        cfg.re_base = hf.rope_parameters.get('rope_theta', 100000)
+        #cfg.re_base = hf.rope_parameters.get('rope_theta', 100000)
+        cfg.re_base = getattr(hf, 'rope_theta', 100000)
         cfg.max_position_embeddings = hf.max_position_embeddings
         cfg.n_heads = hf.num_attention_heads
         cfg.n_kv_heads = hf.num_key_value_heads
