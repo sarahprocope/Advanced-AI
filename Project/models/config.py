@@ -171,18 +171,22 @@ class TrainConfig:
 
     # AdamW learning rate for the Modality Projector parameter group;
     # high because MP is randomly initialised (no pretrained weights)
-    lr_mp: float = 5e-3
+    # Ancienne valeur : 5e-3
+    lr_mp: float = 1e-3
 
     # AdamW learning rate for the ViT (vision encoder) parameter group;
     # low to preserve pretrained SigLIP2 features
-    lr_vit: float = 5e-5
+    # Ancienne valeur : 5e-5
+    lr_vit: float = 1e-5
 
     # AdamW learning rate for the Language Model (decoder) parameter group;
     # low to preserve pretrained SmolLM2 knowledge
-    lr_lm: float = 5e-5
+    # Ancienne valeur : 5e-5
+    lr_lm: float = 1e-5
 
     # Number of samples per forward pass (micro-batch); limited by GPU memory
-    batch_size: int = 2
+    # Ancienne valeur : 2
+    batch_size: int = 4
 
     # Number of micro-batches accumulated before one optimizer.step();
     # effective batch size = batch_size × gradient_accumulation_steps = 16

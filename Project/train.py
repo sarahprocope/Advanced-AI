@@ -74,7 +74,7 @@ def get_dataloaders(train_cfg: TrainConfig, vlm_cfg: VLMConfig):
 
         from data.dataset import FlickrDataset
         train_dataset = FlickrDataset(
-            ds, tokenizer, image_processor, vlm_cfg
+            ds.shuffle(seed=42, keep_in_memory=True), tokenizer, image_processor, vlm_cfg
         )
         val_dataset = FlickrDataset(
             ds, tokenizer, image_processor, vlm_cfg
@@ -104,7 +104,7 @@ def get_dataloaders(train_cfg: TrainConfig, vlm_cfg: VLMConfig):
 
         from data.dataset import CauldronDataset
         train_dataset = CauldronDataset(
-            ds, tokenizer, image_processor, vlm_cfg
+            ds.shuffle(seed=42, keep_in_memory=True), tokenizer, image_processor, vlm_cfg
         )
         val_dataset = CauldronDataset(
             ds, tokenizer, image_processor, vlm_cfg

@@ -135,9 +135,9 @@ class ViTAttention(nn.Module):
         # TODO 2: Use view to introduce the head dimension, then transpose
         #         so heads come before the sequence.
         #         Each of q, k, v → [B, n_heads, T, head_dim]
-        q = q.view(B, T, self.n_heads, self.head_dim)
-        k = k.view(B, T, self.n_heads, self.head_dim)
-        v = v.view(B, T, self.n_heads, self.head_dim)
+        q = q.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
+        k = k.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
+        v = v.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
 
 
         # TODO 3: Attend.
@@ -239,7 +239,7 @@ class ViTBlock(nn.Module):
         """
         # TODO: Apply attention with pre-norm and residual, then the MLP
         #       with pre-norm and residual (pattern shown in the docstring).
-        x = x + self.attn(x)
+        x = x + self.attn(self.ln1(x))
         x = x + self.mlp(self.ln2(x))
 
         return x 

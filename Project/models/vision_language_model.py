@@ -197,9 +197,12 @@ class VisionLanguageModel(nn.Module):
 
         if targets is not None:
             logits = self.decoder.head(hidden)  # [B, T, vocab_size]
+            # Shift so that logits[t] predicts targets[t+1] (causal LM)
+            shift_logits = logits[:, :-1, :].contiguous()
+            shift_targets = targets[:, 1:].contiguous()
             loss = F.cross_entropy(
-                logits.view(-1, logits.size(-1)),
-                targets.view(-1),
+                shift_logits.view(-1, shift_logits.size(-1)),
+                shift_targets.view(-1),
                 ignore_index=-100
             )
             return logits, loss

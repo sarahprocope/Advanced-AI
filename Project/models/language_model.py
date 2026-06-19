@@ -276,25 +276,40 @@ class LMAttention(nn.Module):
         v_exp = torch.repeat_interleave(v, self.n_kv_groups, dim=1)
 
         # TODO 5: Build additive attention mask
-        if attention_mask is not None:
-            min_val = torch.finfo(q.dtype).min
-            mask = (1.0 - attention_mask.to(q.dtype)) * min_val
-            mask = mask.unsqueeze(1).unsqueeze(2)
-        else:
-            mask = None
-
-        # TODO 6: scaled_dot_product_attention
-        
         T_kv = k_exp.shape[2]
         is_causal = (T_curr == T_kv) and (T_curr > 1)
+        min_val = torch.finfo(q.dtype).min
+
+        if attention_mask is not None:
+            # Padding mask: [B, 1, 1, T_kv]
+            pad_mask = (1.0 - attention_mask.to(q.dtype)) * min_val
+            pad_mask = pad_mask.unsqueeze(1).unsqueeze(2)
+        else:
+            pad_mask = None
+
+        # TODO 6: scaled_dot_product_attention
         dropout_p = self.dropout if self.training else 0.0
 
-        output = F.scaled_dot_product_attention(
-            q, k_exp, v_exp,
-            attn_mask=None if is_causal else mask,
-            dropout_p=dropout_p,
-            is_causal=is_causal
-        )
+        if is_causal and pad_mask is not None:
+            # Combine causal mask with padding mask into a single 4D mask
+            causal_mask = torch.triu(
+                torch.full((T_curr, T_kv), min_val, device=q.device, dtype=q.dtype),
+                diagonal=1
+            )  # [T_curr, T_kv]
+            combined_mask = causal_mask.unsqueeze(0).unsqueeze(0) + pad_mask  # broadcast
+            output = F.scaled_dot_product_attention(
+                q, k_exp, v_exp,
+                attn_mask=combined_mask,
+                dropout_p=dropout_p,
+                is_causal=False
+            )
+        else:
+            output = F.scaled_dot_product_attention(
+                q, k_exp, v_exp,
+                attn_mask=pad_mask if not is_causal else None,
+                dropout_p=dropout_p,
+                is_causal=is_causal
+            )
 
         # TODO 7: Transpose, contiguous, view, project, and return
         output = output.transpose(1, 2).contiguous()
